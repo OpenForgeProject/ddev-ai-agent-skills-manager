@@ -1,7 +1,5 @@
-<div align="center">
-
-![DDEV Skills](image/ddev-skills-logo.png){height=200px}
-
+<div style="text-align: center;">
+    <img src="image/ddev-skills-logo.png" height="200px" />
 </div>
 
 [![add-on registry](https://img.shields.io/badge/DDEV-Add--on_Registry-blue)](https://addons.ddev.com)
