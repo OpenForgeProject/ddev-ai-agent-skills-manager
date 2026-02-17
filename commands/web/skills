@@ -27,8 +27,11 @@ NC='\033[0m' # No Color
 echo -e "${GREEN}OpenForge Skills Manager${NC}"
 echo ""
 
-# Check if skills are installed
-INSTALLED_SKILLS=$(npx skills list 2>/dev/null || echo "")
+# Suppress npm warnings
+export NPM_CONFIG_LOGLEVEL=error
+
+# Check if skills are installed (with timeout)
+INSTALLED_SKILLS=$(timeout 30 npx --yes skills list 2>/dev/null || echo "")
 
 # Process each line from config file
 while IFS='=' read -r skill_name repo_url; do
@@ -41,22 +44,19 @@ while IFS='=' read -r skill_name repo_url; do
 
     if echo "$INSTALLED_SKILLS" | grep -q "$skill_name"; then
         echo -ne "${YELLOW}Updating: $skill_name${NC} "
-        output=$(npx skills update --skill "$skill_name" -y 2>&1 < /dev/null)
-        if [[ $? -eq 0 ]]; then
+        if timeout 60 npx --yes skills update --skill "$skill_name" -y >/dev/null 2>&1; then
             echo -e "${GREEN}✓${NC}"
         else
-            echo -e "${RED}✗${NC}"
+            echo -e "${RED}✗ (timeout or error)${NC}"
         fi
     else
         echo -ne "${BLUE}Installing: $skill_name${NC} "
-        output=$(npx skills add "$repo_url" --skill "$skill_name" -y 2>&1 < /dev/null)
-        if echo "$output" | grep -q "Done!"; then
+        if timeout 60 npx --yes skills add "$repo_url" --skill "$skill_name" -y 2>&1 | grep -q "Done!"; then
             echo -e "${GREEN}✓${NC}"
         else
-            echo -e "${RED}✗${NC}"
+            echo -e "${RED}✗ (timeout or error)${NC}"
         fi
     fi
 done <<< "$SKILLS_CONFIG"
 
 echo -e "${GREEN}✓ All skills are up to date!${NC}"
-

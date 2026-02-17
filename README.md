@@ -15,7 +15,8 @@ This add-on integrates Skills into your [DDEV](https://ddev.com/) project. It al
 
 ## Prerequisites
 
-- **Node.js & npm/npx**: This add-on executes commands on your host machine. Ensure you have Node.js and npm installed locally.
+- **DDEV**: You need a running DDEV environment.
+- **Node.js**: Node.js and npm must be available in your DDEV web container (usually included by default).
 
 ## Installation
 
@@ -33,40 +34,38 @@ ddev restart
     cp .ddev/.env.skills.sample .ddev/.env.skills
     ```
 
-2.  **Add a skill**:
-    Visit skills.sh to find skills you want to install. Each skill has a GitHub repository URL that you will use in the configuration.
+2.  **Add your skills**:
     Edit `.ddev/.env.skills` and add the skills you want to install. The format is `SkillName="GitRepoURL"`.
 
     **Example `.ddev/.env.skills`:**
 
     ```env
     # Format: Skill-Name="url"
-    Skill="https://github.com/username/my-skill-repo"
+    MySkill="https://github.com/username/my-skill-repo"
     AnotherSkill="https://github.com/username/another-skill"
     ```
 
 3.  **Version Control**:
     Make sure to commit the `.ddev/.env.skills` file to version control so your team has the same skills configuration.
-    Consider adding `.agents/skills` to your `.gitignore` if you don't want to track installed skills.
 
 ## Usage
 
-Run the following command to install or update the skills defined in your configuration:
+Run the following command within your DDEV project to install or update the skills defined in your configuration:
 
 ```bash
 ddev skills
 ```
 
-This command will:
+This command runs inside the web container and will:
 - Read your `.ddev/.env.skills` file.
-- Check if `npx` is available.
-- Install or update the specified skills using `npx skills`.
+- Check if `npx` is available in the container.
+- Install or update the specified skills using `npx skills` inside the container.
 
 ## Commands
 
 | Command | Description |
 | ------- | ----------- |
-| `ddev skills` | Installs or updates skills based on `.ddev/.env.skills` configuration. |
+| `ddev skills` | Installs or updates skills based on `.ddev/.env.skills` configuration inside the web container. |
 
 ## Credits
 

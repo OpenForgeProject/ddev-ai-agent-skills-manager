@@ -1,7 +1,7 @@
 name: skills
 
 project_files:
-  - commands/host/skills
+  - commands/web/skills
   - .env.skills.sample
 
 ddev_version_constraint: '>= v1.24.3'
