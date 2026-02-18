@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/OpenForgeProject/ddev-skills/compare/v1.2.3...v1.3.0) (2026-02-18)
+
+
+### Features
+
+* add .env.skills file and update README instructions ([19b6fcf](https://github.com/OpenForgeProject/ddev-skills/commit/19b6fcf64243a0049f81886796c28c8b30533081))
+
 ## [1.2.3](https://github.com/OpenForgeProject/ddev-skills/compare/v1.2.2...v1.2.3) (2026-02-18)
 
 
