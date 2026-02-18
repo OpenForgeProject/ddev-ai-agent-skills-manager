@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/OpenForgeProject/ddev-skills/compare/v1.2.0...v1.2.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* enhance skill management script with robust error handling ([3cb9a8b](https://github.com/OpenForgeProject/ddev-skills/commit/3cb9a8bb1cb5eb0e4e47bee89d6020be3380d471))
+
 ## [1.2.0](https://github.com/OpenForgeProject/ddev-skills/compare/v1.1.0...v1.2.0) (2026-02-17)
 
 
