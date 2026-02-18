@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
-set -uo pipefail
+#ddev-generated
 
 ## Description: Install or update required skills for MageForge
 ## Usage: skills
 ## Example: "ddev skills"
 
+set -uo pipefail
+
 # Determine directory where this script is located (symlink-safe)
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+
 # Use $DDEV_APPROOT if available (standard in DDEV), otherwise fallback to /var/www/html
 PROJECT_ROOT="${DDEV_APPROOT:-/var/www/html}"
 CONFIG_FILE="${PROJECT_ROOT}/.ddev/.env.skills"
