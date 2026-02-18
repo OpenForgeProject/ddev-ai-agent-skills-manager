@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
+set -uo pipefail
 
 ## Description: Install or update required skills for MageForge
 ## Usage: skills
 ## Example: "ddev skills"
 
-# Determine directory where this script is located
-SCRIPT_DIR=$(dirname "$0")
+# Determine directory where this script is located (symlink-safe)
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 CONFIG_FILE="${SCRIPT_DIR}/../../.env.skills"
 
 # Load config
 if [[ -f "${CONFIG_FILE}" ]]; then
-    # Read skills from config file
     SKILLS_CONFIG=$(cat "${CONFIG_FILE}")
 else
     echo "❌ Configuration file not found at ${CONFIG_FILE}"
@@ -25,14 +25,13 @@ RED='\033[0;31m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}OpenForge Skills Manager${NC}"
+echo -e "\n${GREEN}OpenForgeProject - Skills Manager${NC}"
 echo ""
 
 # Suppress npm warnings
 export NPM_CONFIG_LOGLEVEL=error
 
 # Determine skills directory location
-# Check standard DDEV paths and relative to script execution
 POSSIBLE_DIRS=(
     "${SCRIPT_DIR}/../../.agents/skills"
     "/var/www/html/.agents/skills"
@@ -47,81 +46,84 @@ for dir in "${POSSIBLE_DIRS[@]}"; do
     fi
 done
 
-INSTALLED_SKILLS=()
+# Collect installed skills into an associative array for O(1) lookup
+declare -A INSTALLED_SKILLS_MAP
 
 if [[ -n "$AGENTS_SKILLS_DIR" ]]; then
-    # Use simple globbing instead of find/process substitution for better compatibility
-    for skill_path in "$AGENTS_SKILLS_DIR"/*; do
-        if [[ -d "$skill_path" ]]; then
-            skill_name=$(basename "$skill_path")
-            INSTALLED_SKILLS+=("$skill_name")
-        fi
+    shopt -s nullglob
+    for skill_path in "$AGENTS_SKILLS_DIR"/*/; do
+        skill_name=$(basename "$skill_path")
+        INSTALLED_SKILLS_MAP["$skill_name"]=1
     done
+    shopt -u nullglob
 fi
 
 # Initialize counters
 UPDATED_COUNT=0
 INSTALLED_COUNT=0
 REMOVED_COUNT=0
-CONFIGURED_SKILLS=()
+FAILED_COUNT=0
+declare -A CONFIGURED_SKILLS_MAP
 
 # Process each line from config file
-while IFS='=' read -r skill_name repo_url; do
+# Use a temp file to avoid subshell issues with herestring and IFS splitting on '='
+while IFS= read -r line; do
     # Skip empty lines and comments
-    [[ -z "$skill_name" || "$skill_name" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+
+    # Split only on the first '=' to handle URLs with '=' in them
+    skill_name="${line%%=*}"
+    repo_url="${line#*=}"
 
     # Remove quotes and whitespace
     skill_name=$(echo "$skill_name" | tr -d '"' | xargs)
     repo_url=$(echo "$repo_url" | tr -d '"' | xargs)
 
-    # Add to configured list
-    CONFIGURED_SKILLS+=("$skill_name")
+    [[ -z "$skill_name" || -z "$repo_url" ]] && continue
 
-    # Check if skill is already installed
-    is_installed=false
-    for installed in "${INSTALLED_SKILLS[@]}"; do
-        if [[ "$installed" == "$skill_name" ]]; then
-            is_installed=true
-            break
-        fi
-    done
+    # Add to configured map
+    CONFIGURED_SKILLS_MAP["$skill_name"]=1
 
-    if [ "$is_installed" = true ]; then
+    if [[ -n "${INSTALLED_SKILLS_MAP[$skill_name]+_}" ]]; then
         echo -ne "${YELLOW}Updating: ${CYAN}$skill_name${NC} "
-        if timeout 60 npx --yes skills update --skill "$skill_name" -y </dev/null >/dev/null 2>&1; then
+        update_output=$(timeout 60 npx --yes skills update --skill "$skill_name" -y </dev/null 2>&1)
+        update_exit=$?
+        if [[ $update_exit -eq 0 ]]; then
             echo -e "${GREEN}✓${NC}"
             ((UPDATED_COUNT++))
         else
             echo -e "${RED}✗ (timeout or error)${NC}"
+            echo -e "  ${RED}↳ ${update_output}${NC}"
+            ((FAILED_COUNT++))
         fi
     else
         echo -ne "${BLUE}Installing: $skill_name${NC} "
-        if timeout 60 npx --yes skills add "$repo_url" --skill "$skill_name" -y </dev/null 2>&1 | grep -q "Done!"; then
+        install_output=$(timeout 60 npx --yes skills add "$repo_url" --skill "$skill_name" -y </dev/null 2>&1)
+        install_exit=$?
+        if [[ $install_exit -eq 0 ]] && echo "$install_output" | grep -q "Done!"; then
             echo -e "${GREEN}✓${NC}"
             ((INSTALLED_COUNT++))
         else
             echo -e "${RED}✗ (timeout or error)${NC}"
+            echo -e "  ${RED}↳ ${install_output}${NC}"
+            ((FAILED_COUNT++))
         fi
     fi
 done <<< "$SKILLS_CONFIG"
 
-# Check for removed skills
-for installed in "${INSTALLED_SKILLS[@]}"; do
-    is_configured=false
-    for configured in "${CONFIGURED_SKILLS[@]}"; do
-        if [[ "$installed" == "$configured" ]]; then
-            is_configured=true
-            break
-        fi
-    done
-
-    if [ "$is_configured" = false ]; then
+# Check for removed skills (skills installed but no longer in config)
+for installed in "${!INSTALLED_SKILLS_MAP[@]}"; do
+    if [[ -z "${CONFIGURED_SKILLS_MAP[$installed]+_}" ]]; then
         echo -ne "${RED}Removing: $installed${NC} "
-        if timeout 60 npx --yes skills remove "$installed" -y </dev/null >/dev/null 2>&1; then
+        remove_output=$(timeout 60 npx --yes skills remove "$installed" -y </dev/null 2>&1)
+        remove_exit=$?
+        if [[ $remove_exit -eq 0 ]]; then
             echo -e "${GREEN}✓${NC}"
             ((REMOVED_COUNT++))
         else
             echo -e "${RED}✗ (timeout or error)${NC}"
+            echo -e "  ${RED}↳ ${remove_output}${NC}"
+            ((FAILED_COUNT++))
         fi
     fi
 done
@@ -131,4 +133,11 @@ echo -e "${GREEN}Summary:${NC}"
 echo -e "  - Installed: ${GREEN}${INSTALLED_COUNT}${NC}"
 echo -e "  - Updated:   ${YELLOW}${UPDATED_COUNT}${NC}"
 echo -e "  - Removed:   ${RED}${REMOVED_COUNT}${NC}"
-echo -e "\n${GREEN}✓ All skills are up to date!${NC}"
+echo -e "  - Failed:    ${RED}${FAILED_COUNT}${NC}"
+
+if [[ $FAILED_COUNT -gt 0 ]]; then
+    echo -e "\n${RED}✗ ${FAILED_COUNT} skill(s) failed. Check output above for details.${NC}"
+    exit 1
+else
+    echo -e "\n${GREEN}✓ All skills are up to date!${NC}"
+fi
