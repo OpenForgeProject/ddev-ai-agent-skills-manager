@@ -27,14 +27,7 @@ ddev restart
 
 ## Configuration
 
-1.  **Create the configuration file**:
-    Navigate to your project's `.ddev` directory and create a file named `.env.skills`. You can also copy the sample file provided:
-
-    ```bash
-    cp .ddev/.env.skills.sample .ddev/.env.skills
-    ```
-
-2.  **Add your skills**:
+1.  **Add your skills**:
     Edit `.ddev/.env.skills` and add the skills you want to install. The format is `SkillName="GitRepoURL"`.
 
     **Example `.ddev/.env.skills`:**
