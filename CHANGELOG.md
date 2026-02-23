@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/OpenForgeProject/ddev-ai-agent-skills-manager/compare/v1.3.1...v2.0.0) (2026-02-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* added new agent paremter to .env.skills to be ensure, only selected agents wlll be installed
+
+### Features
+
+* added new agent paremter to .env.skills to be ensure, only selected agents wlll be installed ([656b4a6](https://github.com/OpenForgeProject/ddev-ai-agent-skills-manager/commit/656b4a6cb4aefd6c55a27ebff9e66a996df75464))
+
 ## [1.3.1](https://github.com/OpenForgeProject/ddev-ai-agent-skills-manager/compare/v1.3.0...v1.3.1) (2026-02-18)
 
 
