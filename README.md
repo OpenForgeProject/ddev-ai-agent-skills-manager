@@ -15,7 +15,7 @@ This add-on integrates Skills into your [DDEV](https://ddev.com/) project. It al
 
 ## Prerequisites
 
-- **DDEV**: You need a running DDEV environment.
+- **DDEV**: You need a running DDEV environment (v1.24.3 or higher).
 - **Node.js**: Node.js and npm must be available in your DDEV web container (usually included by default).
 
 ## Installation
@@ -27,18 +27,26 @@ ddev restart
 
 ## Configuration
 
-1.  **Add your skills**:
-    Edit `.ddev/.env.skills` and add the skills you want to install. The format is `SkillName="GitRepoURL"`.
+1.  **Edit your configuration**:
+    Edit `.ddev/.env.skills` to configure agents and add the skills you want to install.
 
     **Example `.ddev/.env.skills`:**
 
     ```env
-    # Format: Skill-Name="url"
+    # Get available skills from https://skills.sh
+
+    # Define your skill-agents here, separated by spaces
+    # AGENTS="github-copilot claude-code ..."
+
+    # Define your skills here Name="RepoURL"
     MySkill="https://github.com/username/my-skill-repo"
     AnotherSkill="https://github.com/username/another-skill"
     ```
 
-3.  **Version Control**:
+    *   **AGENTS**: (Optional) Space-separated list of agents to install skills for. Defaults to `*` (all agents).
+    *   **Skills**: format is `SkillName="GitRepoURL"`.
+
+2.  **Version Control**:
     Make sure to commit the `.ddev/.env.skills` file to version control so your team has the same skills configuration.
 
 ## Usage
